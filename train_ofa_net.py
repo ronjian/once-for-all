@@ -19,7 +19,7 @@ from ofa.utils import download_url
 from ofa.elastic_nn.training.progressive_shrinking import load_models
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task', type=str, default='depth', choices=[
+parser.add_argument('--task', type=str, default='kernel', choices=[
     'kernel', 'depth', 'expand',
 ])
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
@@ -79,7 +79,7 @@ args.manual_seed = 0
 
 args.lr_schedule_type = 'cosine'
 
-args.base_batch_size = 64
+args.base_batch_size = 32
 args.valid_size = 10000
 
 args.opt_type = 'sgd'
@@ -88,13 +88,14 @@ args.no_nesterov = False
 args.weight_decay = 3e-5
 args.label_smoothing = 0.1
 args.no_decay_keys = 'bn#bias'
-args.fp16_allreduce = False
+# args.fp16_allreduce = False
+args.fp16_allreduce = True
 
 args.model_init = 'he_fout'
 args.validation_frequency = 1
 args.print_frequency = 10
 
-args.n_worker = 8
+args.n_worker = 14
 args.resize_scale = 0.08
 args.distort_color = 'tf'
 args.image_size = '128,160,192,224'
