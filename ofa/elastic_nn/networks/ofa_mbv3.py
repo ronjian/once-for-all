@@ -14,6 +14,8 @@ from ofa.imagenet_codebase.utils import make_divisible, int2list
 
 
 class OFAMobileNetV3(MobileNetV3):
+    # 以max of width_mult_list 为宽度定义mobilenet3，超参数中args.width_mult_list = '1.0'
+
 
     def __init__(self, n_classes=1000, bn_param=(0.1, 1e-5), dropout_rate=0.1, base_stage_width=None,
                  width_mult_list=1.0, ks_list=3, expand_ratio_list=6, depth_list=4):

@@ -176,6 +176,7 @@ class EvolutionFinder:
 			print('Start Evolution...')
 		# After the population is seeded, proceed with evolving the population.
 		for iter in tqdm(range(max_time_budget), desc='Searching with %s constraint (%s)' % (self.constraint_type, self.efficiency_constraint)):
+			# 按照accuracy排序，取topk作为parents
 			parents = sorted(population, key=lambda x: x[0])[::-1][:parents_size]
 			acc = parents[0][0]
 			if verbose:

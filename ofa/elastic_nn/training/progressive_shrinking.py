@@ -228,10 +228,12 @@ def supporting_elastic_depth(train_func, run_manager, args, validate_func_dict):
     validate_func_dict['depth_list'] = sorted(dynamic_net.depth_list)
 
     if args.phase == 1:
+        # TODO
         model_path = download_url('https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K357',
                                   model_dir='.torch/ofa_checkpoints/%d' % hvd.rank())
         load_models(run_manager, dynamic_net, model_path=model_path)
     else:
+        # TODO
         model_path = download_url('https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D34_E6_K357',
                                   model_dir='.torch/ofa_checkpoints/%d' % hvd.rank())
         load_models(run_manager, dynamic_net, model_path=model_path)

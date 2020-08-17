@@ -25,6 +25,7 @@ parser.add_argument('--task', type=str, default='kernel', choices=[
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
 
 args = parser.parse_args()
+# 三次训练，还有teacher model的训练时间，所以总的训练时间至少是训练一个正常网络的4倍
 if args.task == 'kernel':
     args.path = 'exp/normal2kernel'
     args.dynamic_batch_size = 1
@@ -79,7 +80,7 @@ args.manual_seed = 0
 
 args.lr_schedule_type = 'cosine'
 
-args.base_batch_size = 32
+args.base_batch_size = 32 # 这是单个GPU的batchsize
 args.valid_size = 10000
 
 args.opt_type = 'sgd'
@@ -105,7 +106,7 @@ args.not_sync_distributed_image_size = False
 args.bn_momentum = 0.1
 args.bn_eps = 1e-5
 args.dropout = 0.1
-args.base_stage_width = 'proxyless'
+args.base_stage_width = 'proxyless' # 看起来没用？？，真实被用到的是 [16, 24, 40, 80, 112, 160, 960, 1280]？？
 
 args.width_mult_list = '1.0'
 args.dy_conv_scaling_mode = 1

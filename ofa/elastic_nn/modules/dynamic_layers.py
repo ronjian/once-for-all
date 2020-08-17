@@ -56,6 +56,7 @@ class DynamicMBConvLayer(MyModule):
         self.active_out_channel = max(self.out_channel_list)
     
     def forward(self, x):
+        # active_kernel_size是如何sample的？？
         in_channel = x.size(1)
         
         if self.inverted_bottleneck is not None:
