@@ -269,7 +269,7 @@ class Hswish(nn.Module):
     def forward(self, x):
         return x * F.relu6(x + 3., inplace=self.inplace) / 6.
         # For rknn converting
-        # return x * F.relu6(x + 3., inplace=self.inplace) * 0.16666666666666666
+        # return x * F.relu6(x + 3., inplace=self.inplace) * 0.167
 
 
 class Hsigmoid(nn.Module):
@@ -281,7 +281,7 @@ class Hsigmoid(nn.Module):
     def forward(self, x):
         return F.relu6(x + 3., inplace=self.inplace) / 6.
         # For rknn converting
-        # return F.relu6(x + 3., inplace=self.inplace) * 0.16666666666666666
+        # return F.relu6(x + 3., inplace=self.inplace) * 0.167
 
 
 class SEModule(nn.Module):

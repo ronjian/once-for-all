@@ -116,3 +116,7 @@ venv.bak/
 .torch
 
 *.jit
+
+exp/
+
+jiangrong/assets/

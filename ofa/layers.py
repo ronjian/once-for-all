@@ -275,6 +275,7 @@ class PoolingLayer(My2DLayer):
 
         weight_dict = OrderedDict()
         if self.pool_type == 'avg':
+            # print('self.kernel_size, self.stride, padding=padding: ', self.kernel_size, self.stride, padding)
             weight_dict['pool'] = nn.AvgPool2d(
                 self.kernel_size, stride=self.stride, padding=padding, count_include_pad=False
             )

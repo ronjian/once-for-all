@@ -30,7 +30,9 @@ class MobileNetV3(MyNetwork):
         x = self.final_expand_layer(x)
         x = x.mean(3, keepdim=True).mean(2, keepdim=True)  # global average pooling
         x = self.feature_mix_layer(x)
-        x = torch.squeeze(x)
+        # x = torch.squeeze(x)
+        # for converting to RKNN, fixing error "E KeyError: 'aten::matmul'"
+        x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
 

@@ -19,7 +19,7 @@ from ofa.utils import download_url
 from ofa.elastic_nn.training.progressive_shrinking import load_models
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task', type=str, default='kernel', choices=[
+parser.add_argument('--task', type=str, default='depth', choices=[
     'kernel', 'depth', 'expand',
 ])
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
@@ -47,6 +47,7 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '3,4'
+        args.init_path = '/workspace/once-for-all/exp/normal2kernel/checkpoint/checkpoint.pth.tar'
     else:
         args.n_epochs = 120
         args.base_lr = 7.5e-3
@@ -55,6 +56,7 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '2,3,4'
+        args.init_path = None
 elif args.task == 'expand':
     args.path = 'exp/kernel_depth2kernel_depth_width/phase%d' % args.phase
     args.dynamic_batch_size = 4
@@ -66,6 +68,7 @@ elif args.task == 'expand':
         args.ks_list = '3,5,7'
         args.expand_list = '4,6'
         args.depth_list = '2,3,4'
+        args.init_path = None
     else:
         args.n_epochs = 120
         args.base_lr = 7.5e-3
@@ -74,6 +77,7 @@ elif args.task == 'expand':
         args.ks_list = '3,5,7'
         args.expand_list = '3,4,6'
         args.depth_list = '2,3,4'
+        args.init_path = None
 else:
     raise NotImplementedError
 args.manual_seed = 0
@@ -94,7 +98,7 @@ args.fp16_allreduce = True
 
 args.model_init = 'he_fout'
 args.validation_frequency = 1
-args.print_frequency = 10
+args.print_frequency = 100
 
 args.n_worker = 14
 args.resize_scale = 0.08
@@ -219,7 +223,7 @@ if __name__ == '__main__':
               lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict))
     elif args.task == 'depth':
         from ofa.elastic_nn.training.progressive_shrinking import supporting_elastic_depth
-        supporting_elastic_depth(train, distributed_run_manager, args, validate_func_dict)
+        supporting_elastic_depth(train, distributed_run_manager, args, validate_func_dict, args.init_path)
     else:
         from ofa.elastic_nn.training.progressive_shrinking import supporting_elastic_expand
-        supporting_elastic_expand(train, distributed_run_manager, args, validate_func_dict)
+        supporting_elastic_expand(train, distributed_run_manager, args, validate_func_dict, args.init_path)

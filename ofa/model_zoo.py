@@ -48,6 +48,12 @@ class MobileInvertedResidualBlock(MyModule):
         shortcut = set_layer_from_config(config['shortcut'])
         return MobileInvertedResidualBlock(mobile_inverted_conv, shortcut)
 
+# class View(nn.Module):
+#     def __init__(self, shape):
+#         super(View, self).__init__()
+#         self.shape = shape
+#     def forward(self, x):
+#         return x.view(*self.shape)
 
 class MobileNetV3(MyNetwork):
 
@@ -67,7 +73,10 @@ class MobileNetV3(MyNetwork):
         x = self.final_expand_layer(x)
         x = x.mean(3, keepdim=True).mean(2, keepdim=True)  # global average pooling
         x = self.feature_mix_layer(x)
-        x = torch.squeeze(x)
+        # x = torch.squeeze(x)
+        # for converting to RKNN, fixing error "E KeyError: 'aten::matmul'"
+        # x = View((1, x.size()[1]))(x)
+        x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
 

@@ -7,12 +7,13 @@ import time
 import random
 import math
 import copy
+import json
 
 import sys; sys.path.append('/workspace/once-for-all')
 from ofa.model_zoo import ofa_net
 from ofa.utils import download_url
 
-from ofa.tutorial import AccuracyPredictor, LatencyTable, EvolutionFinder
+from ofa.tutorial import AccuracyPredictor, LatencyTable, CustomizedLatencyTable, EvolutionFinder
 from ofa.tutorial import evaluate_ofa_subnet, evaluate_ofa_specialized
 
 # set random seed
@@ -32,8 +33,10 @@ accuracy_predictor = AccuracyPredictor(
                             device='cpu')
 
 target_hardware = 'note10'
-latency_table = LatencyTable(device=target_hardware)
-latency_constraint = 25  # ms, suggested range [15, 33] ms
+# latency_table = LatencyTable(device=target_hardware)
+latency_table = CustomizedLatencyTable(yaml_dir = "/workspace/once-for-all/jiangrong/assets/rv1126-latency-table")
+latency_constraint = 22  # ms, suggested range [15, 33] ms
+
 P = 100  # The size of population in each generation
 N = 500  # How many generations of population to be searched
 r = 0.25  # The ratio of networks that are used as parents for next generation
@@ -65,5 +68,15 @@ print('Found best architecture on %s with latency <= %.2f ms in %.2f seconds! '
 _, net_config, latency = best_info
 print('input resolution is: ', net_config['r'][0])
 ofa_network.set_active_subnet(ks=net_config['ks'], d=net_config['d'], e=net_config['e'])
+print('net_config type', type(net_config))
+with open("./assets/searched.json", 'w') as wf:
+    json.dump(net_config, wf)
 print('Architecture of the searched sub-net:')
 print(ofa_network.module_str)
+
+print('export the searched model to jit')
+net = ofa_network.get_active_subnet(preserve_weight=True)
+input_tensor = torch.Tensor(1,3, net_config['r'][0], net_config['r'][0])
+_ = net(input_tensor)
+traced = torch.jit.trace(net, (input_tensor, ))
+traced.save('./assets/searched.jit')

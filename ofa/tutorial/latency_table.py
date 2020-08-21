@@ -164,3 +164,17 @@ class LatencyTable:
 
     def predict_efficiency(self, spec: dict):
         return self.latency_tables[spec['r'][0]].predict_network_latency_given_spec(spec)
+
+class CustomizedLatencyTable:
+    def __init__(self, yaml_dir, resolutions=(160, 176, 192, 208, 224)):
+        self.latency_tables = {}
+
+        for image_size in resolutions:
+            self.latency_tables[image_size] = LatencyEstimator(
+                # url = os.path.join(yaml_dir, "{}_lookup_table.yaml".format(image_size))
+                url = yaml_dir + "/" + "{}_lookup_table.yaml".format(image_size)
+            )
+            print('Built latency table for image size: %d.' % image_size)
+
+    def predict_efficiency(self, spec: dict):
+        return self.latency_tables[spec['r'][0]].predict_network_latency_given_spec(spec)

@@ -6,6 +6,7 @@ import os
 import torch
 import argparse
 
+import sys; sys.path.append('/workspace/once-for-all')
 from ofa.imagenet_codebase.data_providers.imagenet import ImagenetDataProvider
 from ofa.imagenet_codebase.run_manager import ImagenetRunConfig
 from ofa.imagenet_codebase.run_manager import RunManager
@@ -62,14 +63,21 @@ run_config = ImagenetRunConfig(test_batch_size=args.batch_size, n_worker=args.wo
     you can also manually set the sub-network using: 
         ofa_network.set_active_subnet(ks=7, e=6, d=4) 
 """
-ofa_network.sample_active_subnet()
+# ofa_network.sample_active_subnet()
+
+import json
+# place the search network config here
+with open("/workspace/once-for-all/jiangrong/assets/searched.json", 'r') as fp:
+    net_config = json.load(fp)
+ofa_network.set_active_subnet(ks=net_config['ks'], d=net_config['d'], e=net_config['e'])
+
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 
 """ Test sampled subnet 
 """
 run_manager = RunManager('.tmp/eval_subnet', subnet, run_config, init=False)
 # assign image size: 128, 132, ..., 224
-run_config.data_provider.assign_active_img_size(224)
+run_config.data_provider.assign_active_img_size(net_config['r'][0])
 run_manager.reset_running_statistics(net=subnet)
 
 print('Test random subnet:')
