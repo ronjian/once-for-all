@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 
 import copy
-
+import sys; sys.path.append('/workspace/once-for-all')
 from ofa.utils import download_url
 
 # Helper for constructing the one-hot vectors.
@@ -82,3 +82,13 @@ class AccuracyPredictor:
 
         r_onehot[(r - 112) // 16] = 1
         return torch.Tensor(ks_onehot + ex_onehot + r_onehot)
+
+
+if __name__ == "__main__":
+    import json
+    with open("/workspace/once-for-all/jiangrong/assets/searched.json", 'r') as rf:
+        net_config = json.load(rf)
+    accuracy_predictor = AccuracyPredictor(
+                            pretrained=True,
+                            device='cpu')
+    print("the searched model expected accuracy is: {:.2%}".format(accuracy_predictor.predict_accuracy([net_config]).detach().numpy()[0][0]))

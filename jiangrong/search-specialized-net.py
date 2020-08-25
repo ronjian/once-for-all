@@ -68,7 +68,7 @@ print('Found best architecture on %s with latency <= %.2f ms in %.2f seconds! '
 _, net_config, latency = best_info
 print('input resolution is: ', net_config['r'][0])
 ofa_network.set_active_subnet(ks=net_config['ks'], d=net_config['d'], e=net_config['e'])
-print('net_config type', type(net_config))
+# print('net_config type', type(net_config))
 with open("./assets/searched.json", 'w') as wf:
     json.dump(net_config, wf)
 print('Architecture of the searched sub-net:')

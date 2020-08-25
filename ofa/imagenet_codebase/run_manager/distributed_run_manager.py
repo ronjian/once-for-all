@@ -203,7 +203,8 @@ class DistributedRunManager:
         with torch.no_grad():
             with tqdm(total=len(data_loader),
                       desc='Validate Epoch #{} {}'.format(epoch + 1, run_str),
-                      disable=no_logs or not self.is_root) as t:
+                    #   disable=no_logs or not self.is_root) as t:
+                    disable=no_logs) as t:
                 for i, (images, labels) in enumerate(data_loader):
                     images, labels = images.cuda(), labels.cuda()
                     # compute output
@@ -256,7 +257,8 @@ class DistributedRunManager:
 
         with tqdm(total=nBatch,
                   desc='Train Epoch #{}'.format(epoch + 1),
-                  disable=not self.is_root) as t:
+                #   disable=not self.is_root) as t:
+                ) as t:
             end = time.time()
             for i, (images, labels) in enumerate(self.run_config.train_loader):
                 data_time.update(time.time() - end)

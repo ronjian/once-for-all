@@ -73,10 +73,13 @@ ofa_network.set_active_subnet(ks=net_config['ks'], d=net_config['d'], e=net_conf
 
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 
+# load finetuned weights
+init = torch.load("/workspace/once-for-all/jiangrong/exp/finetune/checkpoint.pth.tar", map_location='cpu')['state_dict']
+subnet.load_weights_from_net(init)
+
 """ Test sampled subnet 
 """
 run_manager = RunManager('.tmp/eval_subnet', subnet, run_config, init=False)
-# assign image size: 128, 132, ..., 224
 run_config.data_provider.assign_active_img_size(net_config['r'][0])
 run_manager.reset_running_statistics(net=subnet)
 

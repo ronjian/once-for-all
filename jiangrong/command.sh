@@ -7,3 +7,5 @@
 
 
 nohup horovodrun -np 2 -H 127.0.0.1:2 python train_ofa_net.py &
+
+nohup horovodrun -np 2 -H 127.0.0.1:2 python finetune-searched-model.py &

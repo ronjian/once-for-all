@@ -48,12 +48,6 @@ class MobileInvertedResidualBlock(MyModule):
         shortcut = set_layer_from_config(config['shortcut'])
         return MobileInvertedResidualBlock(mobile_inverted_conv, shortcut)
 
-# class View(nn.Module):
-#     def __init__(self, shape):
-#         super(View, self).__init__()
-#         self.shape = shape
-#     def forward(self, x):
-#         return x.view(*self.shape)
 
 class MobileNetV3(MyNetwork):
 
