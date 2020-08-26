@@ -35,7 +35,7 @@ accuracy_predictor = AccuracyPredictor(
 target_hardware = 'note10'
 # latency_table = LatencyTable(device=target_hardware)
 latency_table = CustomizedLatencyTable(yaml_dir = "/workspace/once-for-all/jiangrong/assets/rv1126-latency-table")
-latency_constraint = 22  # ms, suggested range [15, 33] ms
+latency_constraint = 23  # ms, suggested range [15, 33] ms
 
 P = 100  # The size of population in each generation
 N = 500  # How many generations of population to be searched

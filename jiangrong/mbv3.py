@@ -9,14 +9,14 @@ from torch.nn import init
 class hswish(nn.Module):
     def forward(self, x):
         # out = x * F.relu6(x + 3, inplace=True) / 6
-        out = x * F.relu6(x + 3, inplace=True) * 0.1667
+        out = x * F.relu6(x + 3, inplace=True) * 0.166667
         return out
 
 
 class hsigmoid(nn.Module):
     def forward(self, x):
         # out = F.relu6(x + 3, inplace=True) / 6
-        out = F.relu6(x + 3, inplace=True) * 0.1667
+        out = F.relu6(x + 3, inplace=True) * 0.166667
         return out
 
 
@@ -63,10 +63,13 @@ class Block(nn.Module):
     def forward(self, x):
         out = self.nolinear1(self.bn1(self.conv1(x)))
         out = self.nolinear2(self.bn2(self.conv2(out)))
-        out = self.bn3(self.conv3(out))
         if self.se != None:
             out = self.se(out)
+        out = self.bn3(self.conv3(out))
+        # if self.se != None:
+        #     out = self.se(out)
         out = out + self.shortcut(x) if self.stride==1 else out
+        # print(out.size())
         return out
 
 
@@ -77,24 +80,43 @@ class MobileNetV3_Large(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.hs1 = hswish()
 
+        # self.bneck = nn.Sequential(
+        #     Block(3, 16, 16, 16, nn.ReLU(inplace=True), None, 1),
+        #     Block(3, 16, 64, 24, nn.ReLU(inplace=True), None, 2),
+        #     Block(3, 24, 72, 24, nn.ReLU(inplace=True), None, 1),
+        #     Block(5, 24, 72, 40, nn.ReLU(inplace=True), SeModule(40), 2),
+        #     Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+        #     Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+        #     Block(3, 40, 240, 80, hswish(), None, 2),
+        #     Block(3, 80, 200, 80, hswish(), None, 1),
+        #     Block(3, 80, 184, 80, hswish(), None, 1),
+        #     Block(3, 80, 184, 80, hswish(), None, 1),
+        #     Block(3, 80, 480, 112, hswish(), SeModule(112), 1),
+        #     Block(3, 112, 672, 112, hswish(), SeModule(112), 1),
+        #     Block(5, 112, 672, 160, hswish(), SeModule(160), 2),
+        #     Block(5, 160, 672, 160, hswish(), SeModule(160), 1),
+        #     Block(5, 160, 960, 160, hswish(), SeModule(160), 1),
+        # )
         self.bneck = nn.Sequential(
             Block(3, 16, 16, 16, nn.ReLU(inplace=True), None, 1),
             Block(3, 16, 64, 24, nn.ReLU(inplace=True), None, 2),
             Block(3, 24, 72, 24, nn.ReLU(inplace=True), None, 1),
-            Block(5, 24, 72, 40, nn.ReLU(inplace=True), SeModule(40), 2),
-            Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
-            Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+            Block(5, 24, 72, 40, nn.ReLU(inplace=True), SeModule(72), 2),
+            Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(120), 1),
+            Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(120), 1),
             Block(3, 40, 240, 80, hswish(), None, 2),
             Block(3, 80, 200, 80, hswish(), None, 1),
             Block(3, 80, 184, 80, hswish(), None, 1),
             Block(3, 80, 184, 80, hswish(), None, 1),
-            Block(3, 80, 480, 112, hswish(), SeModule(112), 1),
-            Block(3, 112, 672, 112, hswish(), SeModule(112), 1),
-            Block(5, 112, 672, 160, hswish(), SeModule(160), 1),
-            Block(5, 160, 672, 160, hswish(), SeModule(160), 2),
-            Block(5, 160, 960, 160, hswish(), SeModule(160), 1),
+            Block(3, 80, 480, 112, hswish(), SeModule(480), 1),
+            Block(3, 112, 672, 112, hswish(), SeModule(672), 1),
+            # Block(5, 112, 672, 160, hswish(), SeModule(672), 1),
+            # Block(5, 160, 672, 160, hswish(), SeModule(672), 2),
+            # Block(5, 160, 960, 160, hswish(), SeModule(960), 1),
+            Block(5, 112, 672, 160, hswish(), SeModule(672), 2),
+            Block(5, 160, 960, 160, hswish(), SeModule(960), 1),
+            Block(5, 160, 960, 160, hswish(), SeModule(960), 1),
         )
-
 
         self.conv2 = nn.Conv2d(160, 960, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn2 = nn.BatchNorm2d(960)
@@ -122,11 +144,17 @@ class MobileNetV3_Large(nn.Module):
     def forward(self, x):
         out = self.hs1(self.bn1(self.conv1(x)))
         out = self.bneck(out)
+        print(out.size())
         out = self.hs2(self.bn2(self.conv2(out)))
+        print(out.size())
         out = F.avg_pool2d(out, 7)
+        print(out.size())
         out = out.view(out.size(0), -1)
+        print(out.size())
         out = self.hs3(self.bn3(self.linear3(out)))
+        print(out.size())
         out = self.linear4(out)
+        print(out.size())
         return out
 
 

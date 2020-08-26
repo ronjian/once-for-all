@@ -4,12 +4,14 @@
 
 import argparse
 import numpy as np
-import os; os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import random
 
 import horovod.torch as hvd
 import torch
 
+import sys; sys.path.append("/workspace/once-for-all")
 from ofa.elastic_nn.modules.dynamic_op import DynamicSeparableConv2d
 from ofa.elastic_nn.networks import OFAMobileNetV3
 from ofa.imagenet_codebase.run_manager import DistributedImageNetRunConfig
@@ -27,7 +29,7 @@ parser.add_argument('--phase', type=int, default=2, choices=[1, 2])
 args = parser.parse_args()
 # 三次训练，还有teacher model的训练时间，所以总的训练时间至少是训练一个正常网络的4倍
 if args.task == 'kernel':
-    args.path = 'exp/normal2kernel'
+    args.path = 'exp/indoor/normal2kernel'
     args.dynamic_batch_size = 1
     args.n_epochs = 120
     args.base_lr = 3e-2
@@ -37,7 +39,7 @@ if args.task == 'kernel':
     args.expand_list = '6'
     args.depth_list = '4'
 elif args.task == 'depth':
-    args.path = 'exp/kernel2kernel_depth/phase%d' % args.phase
+    args.path = 'exp/indoor/kernel2kernel_depth/phase%d' % args.phase
     args.dynamic_batch_size = 2
     if args.phase == 1:
         args.n_epochs = 25
@@ -47,7 +49,7 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '3,4'
-        args.init_path = '/workspace/once-for-all/exp/normal2kernel/checkpoint/checkpoint.pth.tar'
+        args.init_path = 'exp/indoor/normal2kernel/checkpoint/checkpoint.pth.tar'
     else:
         args.n_epochs = 120
         args.base_lr = 7.5e-3
@@ -56,9 +58,9 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '2,3,4'
-        args.init_path = '/workspace/once-for-all/exp/kernel2kernel_depth/phase1/checkpoint/checkpoint.pth.tar'
+        args.init_path = 'exp/indoor/kernel2kernel_depth/phase1/checkpoint/checkpoint.pth.tar'
 elif args.task == 'expand':
-    args.path = 'exp/kernel_depth2kernel_depth_width/phase%d' % args.phase
+    args.path = 'exp/indoor/kernel_depth2kernel_depth_width/phase%d' % args.phase
     args.dynamic_batch_size = 4
     if args.phase == 1:
         args.n_epochs = 25
@@ -86,7 +88,7 @@ args.manual_seed = 0
 args.lr_schedule_type = 'cosine'
 
 args.base_batch_size = 32 # 这是单个GPU的batchsize
-args.valid_size = 10000
+args.valid_size = 5000
 
 args.opt_type = 'sgd'
 args.momentum = 0.9
@@ -101,7 +103,7 @@ args.model_init = 'he_fout'
 args.validation_frequency = 1
 args.print_frequency = 100
 
-args.n_worker = 14
+args.n_worker = 6
 args.resize_scale = 0.08
 args.distort_color = 'tf'
 args.image_size = '128,160,192,224'
@@ -117,9 +119,11 @@ args.width_mult_list = '1.0'
 args.dy_conv_scaling_mode = 1
 args.independent_distributed_sampling = False
 
-args.kd_ratio = 1.0
+# args.kd_ratio = 1.0
+args.kd_ratio = 0.0
 args.kd_type = 'ce'
 
+args.dataset='indoor'
 
 if __name__ == '__main__':
     os.makedirs(args.path, exist_ok=True)
@@ -214,12 +218,12 @@ if __name__ == '__main__':
                           'depth_list': sorted({min(net.depth_list), max(net.depth_list)})}
     if args.task == 'kernel':
         validate_func_dict['ks_list'] = sorted(args.ks_list)
-        if distributed_run_manager.start_epoch == 0:
-            model_path = download_url('https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
-                                      model_dir='.torch/ofa_checkpoints/%d' % hvd.rank())
-            load_models(distributed_run_manager, distributed_run_manager.net, model_path=model_path)
-            distributed_run_manager.write_log('%.3f\t%.3f\t%.3f\t%s' %
-                                              validate(distributed_run_manager, **validate_func_dict), 'valid')
+        # if distributed_run_manager.start_epoch == 0:
+        #     model_path = download_url('https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
+        #                               model_dir='.torch/ofa_checkpoints/%d' % hvd.rank())
+        #     load_models(distributed_run_manager, distributed_run_manager.net, model_path=model_path)
+        #     distributed_run_manager.write_log('%.3f\t%.3f\t%.3f\t%s' %
+        #                                       validate(distributed_run_manager, **validate_func_dict), 'valid')
         train(distributed_run_manager, args,
               lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict))
     elif args.task == 'depth':

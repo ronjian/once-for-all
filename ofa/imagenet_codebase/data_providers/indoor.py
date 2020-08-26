@@ -15,7 +15,7 @@ from ofa.imagenet_codebase.data_providers.base_provider import DataProvider, MyR
 
 
 class ImagenetDataProvider(DataProvider):
-    DEFAULT_PATH = '/dataset/ILSVRC2012/'
+    DEFAULT_PATH = '/dataset/mit-indoor-scenes/'
     
     def __init__(self, save_path=None, train_batch_size=256, test_batch_size=512, valid_size=None, n_worker=32,
                  resize_scale=0.08, distort_color=None, image_size=224,
@@ -88,9 +88,6 @@ class ImagenetDataProvider(DataProvider):
             self.valid = None
         
         test_dataset = self.test_dataset(valid_transforms)
-        print("========>test dataset length:", len(test_dataset.imgs))
-        print("========>num_replicas:", num_replicas)
-        print("========>test_batch_size:", test_batch_size)
         if num_replicas is not None:
             test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset, num_replicas, rank)
             self.test = torch.utils.data.DataLoader(
@@ -106,7 +103,7 @@ class ImagenetDataProvider(DataProvider):
     
     @staticmethod
     def name():
-        return 'imagenet'
+        return 'indoor'
     
     @property
     def data_shape(self):
@@ -114,7 +111,7 @@ class ImagenetDataProvider(DataProvider):
     
     @property
     def n_classes(self):
-        return 1000
+        return 67
     
     @property
     def save_path(self):

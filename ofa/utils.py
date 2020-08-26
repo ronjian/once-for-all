@@ -294,7 +294,8 @@ class SEModule(nn.Module):
         self.reduction = SEModule.REDUCTION
 
         num_mid = make_divisible(self.channel // self.reduction, divisor=8)
-
+        # num_mid = self.channel // self.reduction
+        # print('self.channel, num_mid',self.channel, num_mid)
         self.fc = nn.Sequential(OrderedDict([
             ('reduce', nn.Conv2d(self.channel, num_mid, 1, 1, 0, bias=True)),
             ('relu', nn.ReLU(inplace=True)),

@@ -23,7 +23,6 @@ from ofa.utils import  AverageMeter, accuracy
 
 
 class RunConfig:
-
     def __init__(self, n_epochs, init_lr, lr_schedule_type, lr_schedule_param,
                  dataset, train_batch_size, test_batch_size, valid_size,
                  opt_type, opt_param, weight_decay, label_smoothing, no_decay_keys,

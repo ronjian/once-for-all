@@ -12,6 +12,8 @@ from ofa.imagenet_codebase.utils import MyNetwork, make_divisible
 from ofa.imagenet_codebase.networks.proxyless_nets import MobileInvertedResidualBlock
 
 
+from collections import OrderedDict
+
 class MobileNetV3(MyNetwork):
 
     def __init__(self, first_conv, blocks, final_expand_layer, feature_mix_layer, classifier):
@@ -27,6 +29,7 @@ class MobileNetV3(MyNetwork):
         x = self.first_conv(x)
         for block in self.blocks:
             x = block(x)
+            # print(x.size())
         x = self.final_expand_layer(x)
         x = x.mean(3, keepdim=True).mean(2, keepdim=True)  # global average pooling
         x = self.feature_mix_layer(x)
@@ -114,6 +117,7 @@ class MobileNetV3(MyNetwork):
         feature_mix_layer = ConvLayer(
             feature_dim, last_channel, kernel_size=1, bias=False, use_bn=False, act_func='h_swish',
         )
+        # feature_mix_layer = LinearLayer(feature_dim, last_channel, dropout_rate=dropout_rate)
         # classifier
         classifier = LinearLayer(last_channel, n_classes, dropout_rate=dropout_rate)
 
@@ -146,46 +150,49 @@ class MobileNetV3Large(MobileNetV3):
 
         input_channel = make_divisible(input_channel * width_mult, 8)
         last_channel = make_divisible(last_channel * width_mult, 8) if width_mult > 1.0 else last_channel
+        # print(input_channel, last_channel)
 
-        cfg = {
+        cfg = OrderedDict([
             #    k,     exp,    c,      se,         nl,         s,      e,
-            '0': [
+            ('0', [
                 [3,     16,     16,     False,      'relu',     1,      1],
-            ],
-            '1': [
+            ]),
+            ('1', [
                 [3,     64,     24,     False,      'relu',     2,      None],  # 4
                 [3,     72,     24,     False,      'relu',     1,      None],  # 3
-            ],
-            '2': [
+            ]),
+            ('2', [
                 [5,     72,     40,     True,       'relu',     2,      None],  # 3
                 [5,     120,    40,     True,       'relu',     1,      None],  # 3
                 [5,     120,    40,     True,       'relu',     1,      None],  # 3
-            ],
-            '3': [
+            ]),
+            ('3', [
                 [3,     240,    80,     False,      'h_swish',  2,      None],  # 6
                 [3,     200,    80,     False,      'h_swish',  1,      None],  # 2.5
                 [3,     184,    80,     False,      'h_swish',  1,      None],  # 2.3
                 [3,     184,    80,     False,      'h_swish',  1,      None],  # 2.3
-            ],
-            '4': [
+            ]),
+            ('4', [
                 [3,     480,    112,    True,       'h_swish',  1,      None],  # 6
                 [3,     672,    112,    True,       'h_swish',  1,      None],  # 6
-            ],
-            '5': [
+            ]),
+            ('5', [
+                [5,     672,    160,    True,       'h_swish',  1,      None],  # 6
+                # [5,     960,    160,    True,       'h_swish',  1,      None],  # 6
                 [5,     672,    160,    True,       'h_swish',  2,      None],  # 6
                 [5,     960,    160,    True,       'h_swish',  1,      None],  # 6
-                [5,     960,    160,    True,       'h_swish',  1,      None],  # 6
-            ]
-        }
+            ])
+        ])
 
-        cfg = self.adjust_cfg(cfg, ks, expand_ratio, depth_param, stage_width_list)
+        # cfg = self.adjust_cfg(cfg, ks, expand_ratio, depth_param, stage_width_list)
+        
         # width multiplier on mobile setting, change `exp: 1` and `c: 2`
-        for stage_id, block_config_list in cfg.items():
-            for block_config in block_config_list:
-                if block_config[1] is not None:
-                    block_config[1] = make_divisible(block_config[1] * width_mult, 8)
-                block_config[2] = make_divisible(block_config[2] * width_mult, 8)
-
+        # for stage_id, block_config_list in cfg.items():
+        #     for block_config in block_config_list:
+        #         if block_config[1] is not None:
+        #             block_config[1] = make_divisible(block_config[1] * width_mult, 8)
+        #         block_config[2] = make_divisible(block_config[2] * width_mult, 8)
+        # print(cfg)
         first_conv, blocks, final_expand_layer, feature_mix_layer, classifier = self.build_net_via_cfg(
             cfg, input_channel, last_channel, n_classes, dropout_rate
         )

@@ -3,7 +3,7 @@ import random
 from tqdm import tqdm
 import numpy as np
 
-__all__ = ['EvolutionFinder']
+__all__ = ['EvolutionFinder', 'ArchManager']
 
 
 class ArchManager:

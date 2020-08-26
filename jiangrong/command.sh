@@ -6,6 +6,8 @@
 # --workers 4 \
 
 
-nohup horovodrun -np 2 -H 127.0.0.1:2 python train_ofa_net.py &
+nohup horovodrun -np 1 -H 127.0.0.1:2 python train_ofa_net.py &
 
 nohup horovodrun -np 2 -H 127.0.0.1:2 python finetune-searched-model.py &
+
+nohup horovodrun -np 2 -H 127.0.0.1:2 python train-mbv3.py > train-indoor-mbv3.log 2>&1 &

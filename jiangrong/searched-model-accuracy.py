@@ -7,25 +7,25 @@ import torch
 import argparse
 
 import sys; sys.path.append('/workspace/once-for-all')
-from ofa.imagenet_codebase.data_providers.imagenet import ImagenetDataProvider
+# from ofa.imagenet_codebase.data_providers.imagenet import ImagenetDataProvider
 from ofa.imagenet_codebase.run_manager import ImagenetRunConfig
 from ofa.imagenet_codebase.run_manager import RunManager
 from ofa.model_zoo import ofa_net
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    '-p',
-    '--path',
-    help='The path of imagenet',
-    type=str,
-    default='/dataset/ILSVRC2012')
+# parser.add_argument(
+#     '-p',
+#     '--path',
+#     help='The path of imagenet',
+#     type=str,
+#     default='/dataset/ILSVRC2012')
 parser.add_argument(
     '-g',
     '--gpu',
     help='The gpu(s) to use',
     type=str,
-    default='all')
+    default='1')
 parser.add_argument(
     '-b',
     '--batch-size',
@@ -47,15 +47,14 @@ parser.add_argument(
     help='OFA networks')
 
 args = parser.parse_args()
-if args.gpu == 'all':
-    device_list = range(torch.cuda.device_count())
-    args.gpu = ','.join(str(_) for _ in device_list)
-else:
-    device_list = [int(_) for _ in args.gpu.split(',')]
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-args.batch_size = args.batch_size * max(len(device_list), 1)
-ImagenetDataProvider.DEFAULT_PATH = args.path
-
+# if args.gpu == 'all':
+#     device_list = range(torch.cuda.device_count())
+#     args.gpu = ','.join(str(_) for _ in device_list)
+# else:
+#     device_list = [int(_) for _ in args.gpu.split(',')]
+# args.batch_size = args.batch_size * max(len(device_list), 1)
+# ImagenetDataProvider.DEFAULT_PATH = args.path
+os.environ['CUDA_VISIBLE_DEVICES']=args.gpu
 ofa_network = ofa_net(args.net, pretrained=True)
 run_config = ImagenetRunConfig(test_batch_size=args.batch_size, n_worker=args.workers)
 
@@ -74,12 +73,13 @@ ofa_network.set_active_subnet(ks=net_config['ks'], d=net_config['d'], e=net_conf
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 
 # load finetuned weights
-init = torch.load("/workspace/once-for-all/jiangrong/exp/finetune/checkpoint.pth.tar", map_location='cpu')['state_dict']
-subnet.load_weights_from_net(init)
+# init = torch.load("/workspace/once-for-all/jiangrong/exp/finetune/checkpoint.pth.tar", map_location='cpu')['state_dict']
+# subnet.load_weights_from_net(init)
 
 """ Test sampled subnet 
 """
 run_manager = RunManager('.tmp/eval_subnet', subnet, run_config, init=False)
+print('searched model resolution is ', net_config['r'][0])
 run_config.data_provider.assign_active_img_size(net_config['r'][0])
 run_manager.reset_running_statistics(net=subnet)
 
