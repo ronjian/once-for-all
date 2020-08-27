@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-
+import os
 import copy
 import sys; sys.path.append('/workspace/once-for-all')
 from ofa.utils import download_url
@@ -21,7 +21,7 @@ dp_map = construct_maps(keys=(2, 3, 4))
 
 
 class AccuracyPredictor:
-    def __init__(self, pretrained=True, device='cuda:0'):
+    def __init__(self, pretrained=True, device='cpu', fname=None):
         self.device = device
 
         self.model = nn.Sequential(
@@ -35,9 +35,11 @@ class AccuracyPredictor:
         )
         if pretrained:
             # load pretrained model
-            fname = download_url("https://hanlab.mit.edu/files/OnceForAll/tutorial/acc_predictor.pth")
+            if fname is None:
+                fname = download_url("https://hanlab.mit.edu/files/OnceForAll/tutorial/acc_predictor.pth")
+            assert os.path.exists(fname)
             self.model.load_state_dict(
-                torch.load(fname, map_location=torch.device('cpu'))
+                torch.load(fname, map_location=torch.device(self.device))
             )
         self.model = self.model.to(self.device)
 

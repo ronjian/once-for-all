@@ -28,9 +28,10 @@ ofa_network = ofa_net('ofa_mbv3_d234_e346_k357_w1.2', pretrained=True)
 imagenet_data_path = '/dataset/ILSVRC2012'
 
 
-accuracy_predictor = AccuracyPredictor(
-                            pretrained=True,
-                            device='cpu')
+# accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu')
+accuracy_predictor = AccuracyPredictor(pretrained=True
+                                    ,device='cpu'
+                                    ,fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
 
 target_hardware = 'note10'
 # latency_table = LatencyTable(device=target_hardware)

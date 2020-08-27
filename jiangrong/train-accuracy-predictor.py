@@ -1,9 +1,10 @@
+#%%
 import torch
 import torch.nn.functional as F
 import numpy as np
 import random
 import json
-import os; os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+import os; 
 import copy
 import sys; sys.path.append('/workspace/once-for-all')
 from ofa.model_zoo import ofa_net
@@ -14,7 +15,8 @@ from ofa.imagenet_codebase.run_manager import RunManager
 from ofa.tutorial import AccuracyPredictor
 from ofa.tutorial.evolution_finder import ArchManager
 
-STAGE = 1
+STAGE = 2
+os.environ["CUDA_VISIBLE_DEVICES"] = ''
 
 # set random seed
 random_seed = 1028
@@ -26,6 +28,25 @@ print('Successfully imported all packages and configured random seed to %d!'%ran
 ofa_network = ofa_net('ofa_mbv3_d234_e346_k357_w1.2', pretrained=True)
 CONF_DIR = './assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2/'
 
+#%%
+accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
+#%%
+# with open('./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2/9.json', 'r') as rf:
+#     netconf = json.load(rf)
+# with open('./assets/searched.json', 'r') as rf:
+#     netconf = json.load(rf)
+# ks_list = copy.deepcopy(netconf['ks'])
+# ex_list = copy.deepcopy(netconf['e'])
+# d_list = copy.deepcopy(netconf['d'])
+# r = copy.deepcopy(netconf['r'])[0]
+# print(r,d_list,ks_list,ex_list)
+# # print(netconf['acc'])
+# feats = AccuracyPredictor.spec2feats(ks_list, ex_list, d_list, r).reshape(1, -1).to('cpu')
+# all_feats = [feats]
+# all_feats = torch.cat(all_feats, 0)
+# preds = accuracy_predictor.model(all_feats).to('cpu')
+# print(preds)
+#%%
 if STAGE == 1:
     # Stage1: collect data
     arch_manager = ArchManager()
@@ -53,31 +74,38 @@ if STAGE == 1:
         csum+=1
 else:
     # Stage2: training
-    accuracy_predictor = AccuracyPredictor(pretrained=False
-                                            ,device='cpu')
+    # accuracy_predictor = AccuracyPredictor(pretrained=False,device='cpu')
+    accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
     batch_size = 64
     net_confs = [os.path.join(CONF_DIR, each) for each in os.listdir(CONF_DIR)]
-    params = [p for p in accuracy_predictor.model.parameters() if p.requires_grad]
-    optimizer = torch.optim.Adam(params, 1e-2)
-    while True:
-        all_feats = []
-        gts = []
-        for i in range(batch_size):
-            with open(random.choice(net_confs), 'r') as rf:
-                netconf = json.load(rf)
-            ks_list = copy.deepcopy(netconf['ks'])
-            ex_list = copy.deepcopy(netconf['e'])
-            d_list = copy.deepcopy(netconf['d'])
-            r = copy.deepcopy(netconf['r'])[0]
-            gts.append(netconf['acc'])
-            feats = AccuracyPredictor.spec2feats(ks_list, ex_list, d_list, r).reshape(1, -1).to('cpu')
-            all_feats.append(feats)
-        all_feats = torch.cat(all_feats, 0)
-        preds = accuracy_predictor.model(all_feats).to('cpu')
-        gts = torch.Tensor(gts).to('cpu')
-        loss = F.mse_loss(preds, gts)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(loss, gts.mean(), preds.mean())
+    # params = [p for p in accuracy_predictor.model.parameters() if p.requires_grad]
+    optimizer = torch.optim.Adam(accuracy_predictor.model.parameters(), 1e-5)
+    try:
+        while True:
+            all_feats = []
+            gts = []
+            for i in range(batch_size):
+                with open(random.choice(net_confs), 'r') as rf:
+                    netconf = json.load(rf)
+                ks_list = copy.deepcopy(netconf['ks'])
+                ex_list = copy.deepcopy(netconf['e'])
+                d_list = copy.deepcopy(netconf['d'])
+                r = copy.deepcopy(netconf['r'])[0]
+                gts.append(netconf['acc'])
+                feats = AccuracyPredictor.spec2feats(ks_list, ex_list, d_list, r).reshape(1, -1).to('cpu')
+                all_feats.append(feats)
+            all_feats = torch.cat(all_feats, 0)
+            preds = accuracy_predictor.model(all_feats).to('cpu')
+            gts = torch.Tensor(gts).to('cpu')
+            gts = gts / 100.0
+            loss = F.mse_loss(preds, gts)
+            # loss = loss * 10000.0
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            print(loss, gts.mean(), preds.mean())
+    except (KeyboardInterrupt, SystemExit):
+        print('saving trained model')
+        torch.save(accuracy_predictor.model.state_dict(), './assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
+        exit()
 
