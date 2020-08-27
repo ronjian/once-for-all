@@ -29,18 +29,20 @@ ofa_network = ofa_net('ofa_mbv3_d234_e346_k357_w1.2', pretrained=True)
 CONF_DIR = './assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2/'
 
 #%%
-accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
-#%%
+# accuracy_predictor = AccuracyPredictor(pretrained=True
+#                                     ,device='cpu'
+#                                     ,fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth'
+#                                     ,dropout=0.0)
 # with open('./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2/9.json', 'r') as rf:
 #     netconf = json.load(rf)
-# with open('./assets/searched.json', 'r') as rf:
-#     netconf = json.load(rf)
+# # with open('./assets/searched.json', 'r') as rf:
+# #     netconf = json.load(rf)
 # ks_list = copy.deepcopy(netconf['ks'])
 # ex_list = copy.deepcopy(netconf['e'])
 # d_list = copy.deepcopy(netconf['d'])
 # r = copy.deepcopy(netconf['r'])[0]
 # print(r,d_list,ks_list,ex_list)
-# # print(netconf['acc'])
+# print(netconf['acc'])
 # feats = AccuracyPredictor.spec2feats(ks_list, ex_list, d_list, r).reshape(1, -1).to('cpu')
 # all_feats = [feats]
 # all_feats = torch.cat(all_feats, 0)
@@ -50,7 +52,7 @@ accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./ass
 if STAGE == 1:
     # Stage1: collect data
     arch_manager = ArchManager()
-    csum = 53
+    csum = 1000
     while True:
         net_config = arch_manager.random_sample()
         ofa_network.set_active_subnet(ks=net_config['ks']
@@ -74,12 +76,12 @@ if STAGE == 1:
         csum+=1
 else:
     # Stage2: training
-    # accuracy_predictor = AccuracyPredictor(pretrained=False,device='cpu')
-    accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
-    batch_size = 64
+    accuracy_predictor = AccuracyPredictor(pretrained=False,device='cpu',dropout=0.0)
+    # accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu',fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
+    batch_size = 32
     net_confs = [os.path.join(CONF_DIR, each) for each in os.listdir(CONF_DIR)]
-    # params = [p for p in accuracy_predictor.model.parameters() if p.requires_grad]
-    optimizer = torch.optim.Adam(accuracy_predictor.model.parameters(), 1e-5)
+    optimizer = torch.optim.SGD(accuracy_predictor.model.parameters(), 1e-6, momentum=0.1, nesterov=True)
+    # optimizer = torch.optim.Adam(accuracy_predictor.model.parameters(), 1e-6)
     try:
         while True:
             all_feats = []
@@ -98,14 +100,13 @@ else:
             preds = accuracy_predictor.model(all_feats).to('cpu')
             gts = torch.Tensor(gts).to('cpu')
             gts = gts / 100.0
-            loss = F.mse_loss(preds, gts)
-            # loss = loss * 10000.0
+            loss = F.mse_loss(preds, gts, reduction='sum')
+            # loss = loss * 100.0
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print(loss, gts.mean(), preds.mean())
+            print(loss, gts.mean(), preds.mean(), gts[0], preds[0])
     except (KeyboardInterrupt, SystemExit):
         print('saving trained model')
         torch.save(accuracy_predictor.model.state_dict(), './assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth')
         exit()
-

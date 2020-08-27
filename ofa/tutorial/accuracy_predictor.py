@@ -21,18 +21,42 @@ dp_map = construct_maps(keys=(2, 3, 4))
 
 
 class AccuracyPredictor:
-    def __init__(self, pretrained=True, device='cpu', fname=None):
+    def __init__(self, pretrained=True, device='cpu', fname=None, dropout=0.0):
         self.device = device
 
-        self.model = nn.Sequential(
-            nn.Linear(128, 400),
-            nn.ReLU(),
-            nn.Linear(400, 400),
-            nn.ReLU(),
-            nn.Linear(400, 400),
-            nn.ReLU(),
-            nn.Linear(400, 1),
-        )
+        if pretrained and fname is None:
+            self.model = nn.Sequential(
+                    nn.Linear(128, 400),
+                    nn.ReLU(),
+                    nn.Linear(400, 400),
+                    nn.ReLU(),
+                    nn.Linear(400, 400),
+                    nn.ReLU(),
+                    nn.Linear(400, 1),
+                )
+        else:
+            self.model = nn.Sequential(
+                    nn.Linear(128, 256),
+                    nn.Tanh(),
+                    # nn.ReLU(),
+                    nn.Dropout(dropout),
+                    nn.Linear(256, 512),
+                    nn.Tanh(),
+                    nn.Dropout(dropout),
+                    nn.Linear(512, 1024),
+                    nn.Tanh(),
+                    nn.Dropout(dropout),
+                    nn.Linear(1024, 512),
+                    nn.Tanh(),
+                    nn.Dropout(dropout),
+                    nn.Linear(512, 256),
+                    nn.Tanh(),
+                    nn.Dropout(dropout),
+                    nn.Linear(256, 128),
+                    nn.Tanh(),
+                    nn.Linear(128, 1),
+                    nn.Sigmoid(),
+                )
         if pretrained:
             # load pretrained model
             if fname is None:
