@@ -49,6 +49,7 @@ class DynamicSeparableConv2d(nn.Module):
         
         start, end = sub_filter_start_end(max_kernel_size, kernel_size)
         filters = self.conv.weight[:out_channel, :in_channel, start:end, start:end]
+        # jiangrong: 要得到3x3kernel的话，先crop 7x7kernel中间的5x5, 然后对5x5做线性变换。同样的过程再转换5x5到3x3。
         if self.KERNEL_TRANSFORM_MODE is not None and kernel_size < max_kernel_size:
             start_filter = self.conv.weight[:out_channel, :in_channel, :, :]  # start with max kernel
             for i in range(len(self._ks_set) - 1, 0, -1):
@@ -137,6 +138,7 @@ class DynamicLinear(nn.Module):
 
 
 class DynamicBatchNorm2d(nn.Module):
+    # jiangrong: TODO
     SET_RUNNING_STATISTICS = False
     
     def __init__(self, max_feature_dim):

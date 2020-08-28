@@ -14,9 +14,6 @@ from ofa.imagenet_codebase.utils import make_divisible, int2list
 
 
 class OFAMobileNetV3(MobileNetV3):
-    # 以max of width_mult_list 为宽度定义mobilenet3，超参数中args.width_mult_list = '1.0'
-
-
     def __init__(self, n_classes=1000, bn_param=(0.1, 1e-5), dropout_rate=0.1, base_stage_width=None,
                  width_mult_list=1.0, ks_list=3, expand_ratio_list=6, depth_list=4):
 
@@ -215,6 +212,7 @@ class OFAMobileNetV3(MobileNetV3):
     """ set, sample and get active sub-networks """
 
     def set_active_subnet(self, wid=None, ks=None, e=None, d=None):
+        # jiangrong: 跟踪 active_kernel_size 观察动态的过程
         width_mult_id = int2list(wid, 4 + len(self.block_group_info))
         ks = int2list(ks, len(self.blocks) - 1)
         expand_ratio = int2list(e, len(self.blocks) - 1)
@@ -319,6 +317,7 @@ class OFAMobileNetV3(MobileNetV3):
         return _subnet
 
     def get_active_net_config(self):
+        # jiangrong: TODO: 如何每次iteration的时候更新linear层的dimention
         # first conv
         first_conv_config = self.first_conv.config
         first_block_config = self.blocks[0].config

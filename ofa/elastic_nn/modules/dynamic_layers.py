@@ -12,7 +12,6 @@ from ofa.elastic_nn.utils import adjust_bn_according_to_idx, copy_bn
 
 
 class DynamicMBConvLayer(MyModule):
-    
     def __init__(self, in_channel_list, out_channel_list,
                  kernel_size_list=3, expand_ratio_list=6, stride=1, act_func='relu6', use_se=False):
         super(DynamicMBConvLayer, self).__init__()
@@ -56,7 +55,6 @@ class DynamicMBConvLayer(MyModule):
         self.active_out_channel = max(self.out_channel_list)
     
     def forward(self, x):
-        # active_kernel_size是如何sample的？？
         in_channel = x.size(1)
         
         if self.inverted_bottleneck is not None:

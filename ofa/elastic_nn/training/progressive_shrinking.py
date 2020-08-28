@@ -75,6 +75,7 @@ def validate(run_manager, epoch=0, is_test=True, image_size_list=None,
 
 
 def train_one_epoch(run_manager, args, epoch, warmup_epochs=0, warmup_lr=0):
+    # jiangrong: TODO: 消除 dynamic_net， 改用 run_manager.net
     dynamic_net = run_manager.net
 
     # switch to train mode
@@ -151,7 +152,7 @@ def train_one_epoch(run_manager, args, epoch, warmup_epochs=0, warmup_lr=0):
                 loss_of_subnets.append(loss)
                 acc1_of_subnets.append(acc1[0])
                 acc5_of_subnets.append(acc5[0])
-
+                # jiangrong: 累计两次梯度，再一次性优化？
                 loss.backward()
             run_manager.optimizer.step()
 
