@@ -11,11 +11,21 @@ from ofa.layers import set_layer_from_config, MBInvertedConvLayer, ConvLayer, Id
 from ofa.imagenet_codebase.utils import MyNetwork, make_divisible
 from ofa.imagenet_codebase.networks.proxyless_nets import MobileInvertedResidualBlock
 
-
 from collections import OrderedDict
 
 class MobileNetV3(MyNetwork):
-
+    """
+    Inherit MyNetwork\n
+    - forward, done
+    - module_str, done
+    - config, done
+    - build_from_config, done
+    - zero_last_gamma, done
+    - set_bn_param, inherit
+    - get_bn_param, inherit
+    - init_model, inherit
+    - get_parameters, inherit\n
+    """
     def __init__(self, first_conv, blocks, final_expand_layer, feature_mix_layer, classifier):
         super(MobileNetV3, self).__init__()
 
@@ -29,7 +39,6 @@ class MobileNetV3(MyNetwork):
         x = self.first_conv(x)
         for block in self.blocks:
             x = block(x)
-            # print(x.size())
         x = self.final_expand_layer(x)
         x = x.mean(3, keepdim=True).mean(2, keepdim=True)  # global average pooling
         x = self.feature_mix_layer(x)

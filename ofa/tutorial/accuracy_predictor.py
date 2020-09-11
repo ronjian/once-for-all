@@ -38,7 +38,6 @@ class AccuracyPredictor:
             self.model = nn.Sequential(
                     nn.Linear(128, 256),
                     nn.Tanh(),
-                    # nn.ReLU(),
                     nn.Dropout(dropout),
                     nn.Linear(256, 512),
                     nn.Tanh(),

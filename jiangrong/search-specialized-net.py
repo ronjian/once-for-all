@@ -1,4 +1,4 @@
-import os
+import os; os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
@@ -26,17 +26,19 @@ os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
 ofa_network = ofa_net('ofa_mbv3_d234_e346_k357_w1.2', pretrained=True)
 imagenet_data_path = '/dataset/ILSVRC2012'
-
-
-# accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu')
-accuracy_predictor = AccuracyPredictor(pretrained=True
-                                    ,device='cpu'
-                                    ,fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth'
-                                    ,dropout=0.0)
-
 target_hardware = 'note10'
-# latency_table = LatencyTable(device=target_hardware)
-latency_table = CustomizedLatencyTable(yaml_dir = "/workspace/once-for-all/jiangrong/assets/rv1126-latency-table")
+
+CUSTOMIZED=True
+if CUSTOMIZED:
+    accuracy_predictor = AccuracyPredictor(pretrained=True
+                                        ,device='cpu'
+                                        ,fname='./assets/accuracy_data/ofa_mbv3_d234_e346_k357_w1.2.pth'
+                                        ,dropout=0.0)
+    latency_table = CustomizedLatencyTable(yaml_dir = "/workspace/once-for-all/jiangrong/assets/rv1126-latency-table")
+else:
+    accuracy_predictor = AccuracyPredictor(pretrained=True,device='cpu')
+    latency_table = LatencyTable(device=target_hardware)
+
 latency_constraint = 23  # ms, suggested range [15, 33] ms
 
 P = 100  # The size of population in each generation

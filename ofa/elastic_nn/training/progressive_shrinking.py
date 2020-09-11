@@ -129,6 +129,7 @@ def train_one_epoch(run_manager, args, epoch, warmup_epochs=0, warmup_lr=0):
                 else:
                     subnet_seed = int('%d%.3d%.3d' % (epoch * nBatch + i, _, 0))
                 random.seed(subnet_seed)
+                # sample !!!!
                 subnet_settings = dynamic_net.sample_active_subnet()
                 subnet_str += '%d: ' % _ + ','.join(['%s_%s' % (
                     key, '%.1f' % subset_mean(val, 0) if isinstance(val, list) else val

@@ -2,7 +2,7 @@
 # Han Cai, Chuang Gan, Tianzhe Wang, Zhekai Zhang, Song Han
 # International Conference on Learning Representations (ICLR), 2020.
 
-import os
+import os; os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import torch
 import argparse
 
@@ -25,7 +25,7 @@ parser.add_argument(
     '--gpu',
     help='The gpu(s) to use',
     type=str,
-    default='1')
+    default='')
 parser.add_argument(
     '-b',
     '--batch-size',

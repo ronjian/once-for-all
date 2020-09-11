@@ -8,7 +8,14 @@ import torch.nn as nn
 
 
 class MyModule(nn.Module):
-
+    """
+    Inherit nn.Module\n
+    Add:
+    - forward
+    - module_str
+    - config
+    - build_from_config
+    """
     def forward(self, x):
         raise NotImplementedError
 
@@ -26,7 +33,20 @@ class MyModule(nn.Module):
 
 
 class MyNetwork(MyModule):
-
+    """
+    Inherit MyModule\n
+    - forward
+    - module_str
+    - config
+    - build_from_config\n
+    Adding:\n
+    - zero_last_gamma
+    - set_bn_param, done
+    - get_bn_param, done
+    - init_model, done
+    - get_parameters, done
+    - weight_parameters, done
+    """
     def forward(self, x):
         raise NotImplementedError
 

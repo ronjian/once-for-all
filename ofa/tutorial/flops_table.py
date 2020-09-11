@@ -7,7 +7,8 @@ import numpy as np
 import thop
 from ofa.model_zoo import ofa_net
 from ofa.imagenet_codebase.networks.proxyless_nets import MobileInvertedResidualBlock
-from ofa.imagenet_codebase.modules.layers import *
+# from ofa.imagenet_codebase.modules.layers import *
+from ofa.layers import *
 
 __all__ = ['FLOPsTable']
 

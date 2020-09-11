@@ -19,10 +19,10 @@ from ofa.utils import download_url
 from ofa.elastic_nn.training.progressive_shrinking import load_models
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task', type=str, default='depth', choices=[
+parser.add_argument('--task', type=str, default='expand', choices=[
     'kernel', 'depth', 'expand',
 ])
-parser.add_argument('--phase', type=int, default=2, choices=[1, 2])
+parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
 
 args = parser.parse_args()
 # 三次训练，还有teacher model的训练时间，所以总的训练时间至少是训练一个正常网络的4倍
@@ -68,7 +68,7 @@ elif args.task == 'expand':
         args.ks_list = '3,5,7'
         args.expand_list = '4,6'
         args.depth_list = '2,3,4'
-        args.init_path = None
+        args.init_path = '/workspace/once-for-all/exp/kernel2kernel_depth/phase2/checkpoint/checkpoint.pth.tar'
     else:
         args.n_epochs = 120
         args.base_lr = 7.5e-3
