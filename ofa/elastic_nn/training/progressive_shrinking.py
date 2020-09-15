@@ -129,8 +129,10 @@ def train_one_epoch(run_manager, args, epoch, warmup_epochs=0, warmup_lr=0):
                 else:
                     subnet_seed = int('%d%.3d%.3d' % (epoch * nBatch + i, _, 0))
                 random.seed(subnet_seed)
-                # sample !!!!
+                ####### random sample the active network ##############
                 subnet_settings = dynamic_net.sample_active_subnet()
+                #######################################################
+
                 subnet_str += '%d: ' % _ + ','.join(['%s_%s' % (
                     key, '%.1f' % subset_mean(val, 0) if isinstance(val, list) else val
                 ) for key, val in subnet_settings.items()]) + ' || '
@@ -308,12 +310,12 @@ def supporting_elastic_expand(train_func, run_manager, args, validate_func_dict,
     dynamic_net.re_organize_middle_weights()
     run_manager.write_log('%.3f\t%.3f\t%.3f\t%s' % validate(run_manager, **validate_func_dict), 'valid')
     
-    expand_stage_list = dynamic_net.expand_ratio_list.copy()
-    expand_stage_list.sort(reverse=True)
-    n_stages = len(expand_stage_list) - 1
-    start_stage = n_stages - 1
+    expand_stage_list = dynamic_net.expand_ratio_list.copy() #[3,4,6] | [4,6]
+    expand_stage_list.sort(reverse=True) # [6, 4, 3] | [6,4]
+    n_stages = len(expand_stage_list) - 1 # 2 | 1
+    start_stage = n_stages - 1 # 1 | 0
     
-    for current_stage in range(start_stage, n_stages):
+    for current_stage in range(start_stage, n_stages): # [1] | [0]
         run_manager.write_log(
             '-' * 30 + 'Supporting Elastic Expand Ratio: %s -> %s' %
             (expand_stage_list[:current_stage + 1], expand_stage_list[:current_stage + 2]) + '-' * 30, 'valid'

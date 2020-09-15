@@ -14,6 +14,30 @@ from ofa.imagenet_codebase.utils import make_divisible, int2list
 
 
 class OFAMobileNetV3(MobileNetV3):
+    r"""
+    Inherit MobileNetV3
+
+    - forward, done
+    - module_str, done
+    - config, done
+    - build_from_config, done
+    - zero_last_gamma, inherit
+    - set_bn_param, inherit
+    - get_bn_param, inherit
+    - init_model, inherit
+    - get_parameters, inherit
+
+    Adding:
+
+    - load_weights_from_net, done
+    - set_active_subnet, done
+    - set_constraint, done
+    - clear_constraint, done
+    - sample_active_subnet, done
+    - get_active_subnet, done
+    - get_active_net_config, done
+    - re_organize_middle_weights, done
+    """
     def __init__(self, n_classes=1000, bn_param=(0.1, 1e-5), dropout_rate=0.1, base_stage_width=None,
                  width_mult_list=1.0, ks_list=3, expand_ratio_list=6, depth_list=4):
 
@@ -124,12 +148,12 @@ class OFAMobileNetV3(MobileNetV3):
 
         # runtime_depth
         self.runtime_depth = [len(block_idx) for block_idx in self.block_group_info]
-
-    """ MyNetwork required methods """
-
+    
     @staticmethod
     def name():
         return 'OFAMobileNetV3'
+
+    """ MyNetwork required methods """
 
     def forward(self, x):
         # first conv
@@ -184,6 +208,8 @@ class OFAMobileNetV3(MobileNetV3):
     @staticmethod
     def build_from_config(config):
         raise ValueError('do not support this function')
+
+    """ Adding methods """
 
     def load_weights_from_net(self, src_model_dict):
         model_dict = self.state_dict()
@@ -378,8 +404,8 @@ class OFAMobileNetV3(MobileNetV3):
             'classifier': classifier_config,
         }
 
-    """ Width Related Methods """
-
+    """ Width Related Methods,  """
+    # jiangrong: width相关暂时不用
     def re_organize_middle_weights(self, expand_ratio_stage=0):
         for block in self.blocks[1:]:
             block.mobile_inverted_conv.re_organize_middle_weights(expand_ratio_stage)

@@ -11,6 +11,162 @@ from ofa.elastic_nn.modules.dynamic_op import *
 from ofa.elastic_nn.utils import adjust_bn_according_to_idx, copy_bn
 
 
+# class DynamicBottleneck(MyModule):
+#     # author: jiangrong
+#     def __init__(self, in_channel_list, out_channel_list,
+#                  kernel_size_list=[3,5,7], shortcut=True
+#                  , stride=1, act_func='relu', use_se=False):
+#         super(DynamicKernelConvLayer, self).__init__()
+        
+#         self.in_channel_list = in_channel_list
+#         self.out_channel_list = out_channel_list
+#         self.kernel_size_list = int2list(kernel_size_list, 1)
+#         self.active_kernel_size = max(self.kernel_size_list)
+#         self.stride = stride
+#         self.act_func = act_func
+#         self.shortcut = shortcut
+#         # TODO
+#         self.dilation = 1
+#         self.use_bn = False
+        
+#         # build modules
+#         self.max_in_channels = max(self.in_channel_list)
+#         self.max_out_channels = max(self.out_channel_list)
+#         self.active_out_channel = max(self.out_channel_list)
+#         self.cv1 = nn.Sequential(OrderedDict([
+#                                     ('conv', DynamicConv2d(self.max_in_channels
+#                                             , self.max_out_channels // 2
+#                                             , self.kernel_size_list
+#                                             , stride=1
+#                                             , dilation=1))
+#                                     ,('bn', DynamicBatchNorm2d(self.max_out_channels // 2))
+#                                     ,('act', build_activation(self.act_func, inplace=True))
+#                                 ]))
+#         self.cv2 = nn.Sequential(OrderedDict([
+#                                     ('conv', DynamicConv2d(self.max_out_channels // 2
+#                                             , self.max_out_channels
+#                                             , self.kernel_size_list
+#                                             , stride=1
+#                                             , dilation=1))
+#                                     ,('bn', DynamicBatchNorm2d(self.max_out_channels))
+#                                     ,('act', build_activation(self.act_func, inplace=True))
+#                                 ]))
+#         self.add = self.shortcut and self.max_in_channels == self.max_out_channels
+
+#     def forward(self, x):
+#         in_channel = x.size(1)
+#         self.cv1.conv.active_kernel_size = self.active_kernel_size
+#         self.cv2.conv.active_kernel_size = self.active_kernel_size
+#         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
+    
+#     @property
+#     def module_str(self):
+#         return '(O%d, K%d)' % (self.active_out_channel, self.active_kernel_size)
+    
+#     @property
+#     def config(self):
+#         return {
+#             'name': DynamicKernelConvLayer.__name__,
+#             'in_channel_list': self.in_channel_list,
+#             'out_channel_list': self.out_channel_list,
+#             'kernel_size_list': self.kernel_size_list,
+#             'stride': self.stride,
+#             'act_func': self.act_func,
+#         }
+    
+#     @staticmethod
+#     def build_from_config(config):
+#         return DynamicKernelConvLayer(**config)
+
+#     ############################################################################################
+#     def get_active_subnet(self, in_channel, preserve_weight=True):
+#         sub_layer = ConvLayer(
+#             in_channel, self.active_out_channel, self.active_kernel_size, self.stride, self.dilation,
+#             use_bn=self.use_bn, act_func=self.act_func
+#         )
+#         sub_layer = sub_layer.to(get_net_device(self))
+        
+#         if not preserve_weight:
+#             return sub_layer
+        
+#         sub_layer.conv.weight.data.copy_(self.kernelConv.conv.weight.data[:self.active_out_channel, :in_channel, :, :])
+#         if self.use_bn:
+#             copy_bn(sub_layer.bn, self.bn.bn)
+        
+#         return sub_layer
+
+# class DynamicKernelConvLayer(MyModule):
+#     # author: jiangrong
+#     def __init__(self, in_channel_list, out_channel_list,
+#                  kernel_size_list=[3,5,7], expand_ratio_list=6, stride=1, act_func='relu', use_se=False):
+#         super(DynamicKernelConvLayer, self).__init__()
+        
+#         self.in_channel_list = in_channel_list
+#         self.out_channel_list = out_channel_list
+#         self.kernel_size_list = int2list(kernel_size_list, 1)
+#         self.active_kernel_size = max(self.kernel_size_list)
+#         self.stride = stride
+#         self.act_func = act_func
+#         # TODO
+#         self.dilation = 1
+#         self.use_bn = False
+        
+#         # build modules
+#         self.max_in_channels = max(self.in_channel_list)
+#         self.max_out_channels = max(self.out_channel_list)
+#         self.active_out_channel = max(self.out_channel_list)
+#         self.kernelConv = nn.Sequential(OrderedDict([
+#                                     ('conv', DynamicConv2d(self.max_in_channels
+#                                             , self.max_out_channels
+#                                             , self.kernel_size_list
+#                                             , stride=1
+#                                             , dilation=1))
+#                                     ,('bn', DynamicBatchNorm2d(self.max_out_channels))
+#                                     ,('act', build_activation(self.act_func, inplace=True))
+#                                 ]))
+    
+#     def forward(self, x):
+#         in_channel = x.size(1)
+#         self.kernelConv.conv.active_kernel_size = self.active_kernel_size
+#         x = self.kernelConv(x)
+#         return x
+    
+#     @property
+#     def module_str(self):
+#         return '(O%d, K%d)' % (self.active_out_channel, self.active_kernel_size)
+    
+#     @property
+#     def config(self):
+#         return {
+#             'name': DynamicKernelConvLayer.__name__,
+#             'in_channel_list': self.in_channel_list,
+#             'out_channel_list': self.out_channel_list,
+#             'kernel_size_list': self.kernel_size_list,
+#             'stride': self.stride,
+#             'act_func': self.act_func,
+#         }
+    
+#     @staticmethod
+#     def build_from_config(config):
+#         return DynamicKernelConvLayer(**config)
+
+#     ############################################################################################
+#     def get_active_subnet(self, in_channel, preserve_weight=True):
+#         sub_layer = ConvLayer(
+#             in_channel, self.active_out_channel, self.active_kernel_size, self.stride, self.dilation,
+#             use_bn=self.use_bn, act_func=self.act_func
+#         )
+#         sub_layer = sub_layer.to(get_net_device(self))
+        
+#         if not preserve_weight:
+#             return sub_layer
+        
+#         sub_layer.conv.weight.data.copy_(self.kernelConv.conv.weight.data[:self.active_out_channel, :in_channel, :, :])
+#         if self.use_bn:
+#             copy_bn(sub_layer.bn, self.bn.bn)
+        
+#         return sub_layer
+
 class DynamicMBConvLayer(MyModule):
     def __init__(self, in_channel_list, out_channel_list,
                  kernel_size_list=3, expand_ratio_list=6, stride=1, act_func='relu6', use_se=False):
@@ -63,7 +219,7 @@ class DynamicMBConvLayer(MyModule):
 
         self.depth_conv.conv.active_kernel_size = self.active_kernel_size
         self.point_linear.conv.active_out_channel = self.active_out_channel
-        
+        # inverted bottleneck (expand) => depth wise => point wise
         if self.inverted_bottleneck is not None:
             x = self.inverted_bottleneck(x)
         x = self.depth_conv(x)
@@ -141,22 +297,25 @@ class DynamicMBConvLayer(MyModule):
         return sub_layer
 
     def re_organize_middle_weights(self, expand_ratio_stage=0):
-        importance = torch.sum(torch.abs(self.point_linear.conv.conv.weight.data), dim=(0, 2, 3))
+        # importance是权重对于输入层的重要程度, [in_dim,]
+        importance = torch.sum(torch.abs(self.point_linear.conv.conv.weight.data), dim=(0, 2, 3)) # out, in, height, weight
         if expand_ratio_stage > 0:
             sorted_expand_list = copy.deepcopy(self.expand_ratio_list)
             sorted_expand_list.sort(reverse=True)
             target_width = sorted_expand_list[expand_ratio_stage]
             target_width = round(max(self.in_channel_list) * target_width)
-            importance[target_width:] = torch.arange(0, target_width - importance.size(0), -1)
+            importance[target_width:] = torch.arange(0, target_width - importance.size(0), -1) 
+            # example: torch.arange(0, -3, -1) => tensor([ 0, -1, -2])
         
         sorted_importance, sorted_idx = torch.sort(importance, dim=0, descending=True)
-        self.point_linear.conv.conv.weight.data = torch.index_select(
-            self.point_linear.conv.conv.weight.data, 1, sorted_idx
-        )
-        
+        # depth conv 的输出
         adjust_bn_according_to_idx(self.depth_conv.bn.bn, sorted_idx)
         self.depth_conv.conv.conv.weight.data = torch.index_select(
             self.depth_conv.conv.conv.weight.data, 0, sorted_idx
+        )
+        # point conv 的输入
+        self.point_linear.conv.conv.weight.data = torch.index_select(
+            self.point_linear.conv.conv.weight.data, 1, sorted_idx
         )
 
         if self.use_se:
@@ -177,6 +336,7 @@ class DynamicMBConvLayer(MyModule):
         
         # TODO if inverted_bottleneck is None, the previous layer should be reorganized accordingly
         if self.inverted_bottleneck is not None:
+            # inverted_bottleneck 的输出
             adjust_bn_according_to_idx(self.inverted_bottleneck.bn.bn, sorted_idx)
             self.inverted_bottleneck.conv.conv.weight.data = torch.index_select(
                 self.inverted_bottleneck.conv.conv.weight.data, 0, sorted_idx
@@ -184,7 +344,6 @@ class DynamicMBConvLayer(MyModule):
             return None
         else:
             return sorted_idx
-
 
 class DynamicConvLayer(MyModule):
     
@@ -255,7 +414,6 @@ class DynamicConvLayer(MyModule):
             copy_bn(sub_layer.bn, self.bn.bn)
         
         return sub_layer
-        
 
 class DynamicLinearLayer(MyModule):
 

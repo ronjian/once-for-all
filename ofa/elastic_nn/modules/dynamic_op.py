@@ -11,7 +11,11 @@ from ofa.utils import get_same_padding
 from ofa.imagenet_codebase.utils import sub_filter_start_end, make_divisible, SEModule
 
 
+
 class DynamicSeparableConv2d(nn.Module):
+    """
+    可变channel、kernel的深度卷积
+    """
     KERNEL_TRANSFORM_MODE = None  # None or 1
     
     def __init__(self, max_in_channels, kernel_size_list, stride=1, dilation=1):
@@ -24,7 +28,7 @@ class DynamicSeparableConv2d(nn.Module):
         
         self.conv = nn.Conv2d(
             self.max_in_channels, self.max_in_channels, max(self.kernel_size_list), self.stride,
-            groups=self.max_in_channels, bias=False,
+            groups=self.max_in_channels, bias=False, # jiangrong: 如果是 bias=True的话，应该怎么设计动态转换呢？？
         )
         
         self._ks_set = list(set(self.kernel_size_list))
@@ -48,7 +52,8 @@ class DynamicSeparableConv2d(nn.Module):
         max_kernel_size = max(self.kernel_size_list)
         
         start, end = sub_filter_start_end(max_kernel_size, kernel_size)
-        filters = self.conv.weight[:out_channel, :in_channel, start:end, start:end]
+        #jiangrong: 我认为更好的写法是： self.conv.weight[:out_channel, :, start:end, start:end], 因为depth卷机的参数量是[max_out_channels, 1, max(self.kernel_size_list), max(self.kernel_size_list)]
+        filters = self.conv.weight[:out_channel, :in_channel, start:end, start:end] 
         # jiangrong: 要得到3x3kernel的话，先crop 7x7kernel中间的5x5, 然后对5x5做线性变换。同样的过程再转换5x5到3x3。
         if self.KERNEL_TRANSFORM_MODE is not None and kernel_size < max_kernel_size:
             start_filter = self.conv.weight[:out_channel, :in_channel, :, :]  # start with max kernel
@@ -84,8 +89,93 @@ class DynamicSeparableConv2d(nn.Module):
         )
         return y
 
+# class DynamicConv2d(nn.Module):
+#     """
+#     author: jiangrong, 借鉴 class DynamicSeparableConv2d
+
+#     可变channel、kernel的普通卷积
+#     """
+#     KERNEL_TRANSFORM_MODE = 1  # None or 1
+    
+#     def __init__(self, max_in_channels, max_out_channels, kernel_size_list, stride=1, dilation=1, bias=False):
+#         super(DynamicSeparableConv2d, self).__init__()
+        
+#         self.max_in_channels = max_in_channels
+#         self.max_out_channels = max_out_channels # 增加：输出范围
+#         self.kernel_size_list = kernel_size_list
+#         self.stride = stride
+#         self.dilation = dilation
+#         self.bias = False
+        
+#         self.conv = nn.Conv2d(
+#             self.max_in_channels
+#             , self.max_out_channels
+#             , max(self.kernel_size_list)
+#             , self.stride
+#             , groups=1
+#             , bias=self.bias
+#         )
+        
+#         self._ks_set = list(set(self.kernel_size_list))
+#         self._ks_set.sort()  # e.g., [3, 5, 7]
+#         if self.KERNEL_TRANSFORM_MODE is not None:
+#             # register scaling parameters
+#             # 7to5_matrix, 5to3_matrix
+#             scale_params = {}
+#             for i in range(len(self._ks_set) - 1):
+#                 ks_small = self._ks_set[i]
+#                 ks_larger = self._ks_set[i + 1]
+#                 scale_params['conv%d2conv%d_matrix' % (ks_larger, ks_small)] = \
+#                         Parameter(torch.eye(ks_small * ks_small * self.max_in_channels)) # 对卷机的参数变换, max_in * k * k
+#             for name, param in scale_params.items():
+#                 self.register_parameter(name, param)
+
+#         self.active_kernel_size = max(self.kernel_size_list)
+
+#     def get_active_filter(self, in_channel, out_channel, kernel_size): # 增加： out_channel
+#         max_kernel_size = max(self.kernel_size_list)
+#         start, end = sub_filter_start_end(max_kernel_size, kernel_size)
+#         filters = self.conv.weight[:out_channel, :in_channel, start:end, start:end]
+#         # jiangrong: 要得到3x3kernel的话，先crop 7x7kernel中间的5x5, 然后对5x5做线性变换。同样的过程再转换5x5到3x3。
+#         if self.KERNEL_TRANSFORM_MODE is not None and kernel_size < max_kernel_size:
+#             start_filter = self.conv.weight[:out_channel, :in_channel, :, :]  # start with max kernel
+#             for i in range(len(self._ks_set) - 1, 0, -1):
+#                 src_ks = self._ks_set[i]
+#                 if src_ks <= kernel_size:
+#                     break
+#                 target_ks = self._ks_set[i - 1]
+#                 start, end = sub_filter_start_end(src_ks, target_ks)
+#                 _input_filter = start_filter[:, :, start:end, start:end]
+#                 _input_filter = _input_filter.contiguous()
+#                 _input_filter = _input_filter.view(_input_filter.size(0), _input_filter.size(1), -1) # out, in, k*k
+#                 _input_filter = _input_filter.view(-1, _input_filter.size(1) * _input_filter.size(2)) # out, k*k*in
+#                 linear_slice_idx = target_ks*target_ks*in_channel
+#                 _input_filter = F.linear(
+#                     _input_filter, self.__getattr__('conv%d2conv%d_matrix' % (src_ks, target_ks))[:linear_slice_idx, :linear_slice_idx],
+#                 )
+#                 _input_filter = _input_filter.view(filters.size(0), filters.size(1), target_ks ** 2) # out, in, k*k
+#                 _input_filter = _input_filter.view(filters.size(0), filters.size(1), target_ks, target_ks) # out, in, k, k
+#                 start_filter = _input_filter
+#             filters = start_filter
+#         return filters
+    
+#     def forward(self, x, output_channel, kernel_size=None): # 增加： out_channel
+#         if kernel_size is None:
+#             kernel_size = self.active_kernel_size
+#         in_channel = x.size(1)
+        
+#         filters = self.get_active_filter(in_channel, output_channel, kernel_size).contiguous()
+        
+#         padding = get_same_padding(kernel_size)
+#         y = F.conv2d(
+#             x, filters, None, self.stride, padding, self.dilation, in_channel
+#         )
+#         return y
 
 class DynamicPointConv2d(nn.Module):
+    """
+    可变channel的普通卷积
+    """
     
     def __init__(self, max_in_channels, max_out_channels, kernel_size=1, stride=1, dilation=1):
         super(DynamicPointConv2d, self).__init__()
@@ -112,9 +202,10 @@ class DynamicPointConv2d(nn.Module):
         y = F.conv2d(x, filters, None, self.stride, padding, self.dilation, 1)
         return y
 
-
 class DynamicLinear(nn.Module):
-    
+    """
+    可变层数的全连接
+    """
     def __init__(self, max_in_features, max_out_features, bias=True):
         super(DynamicLinear, self).__init__()
         
@@ -136,9 +227,10 @@ class DynamicLinear(nn.Module):
         y = F.linear(x, weight, bias)
         return y
 
-
 class DynamicBatchNorm2d(nn.Module):
-    # jiangrong: TODO
+    """
+    可变层数的BN
+    """
     SET_RUNNING_STATISTICS = False
     
     def __init__(self, max_feature_dim):
@@ -173,9 +265,10 @@ class DynamicBatchNorm2d(nn.Module):
         y = self.bn_forward(x, self.bn, feature_dim)
         return y
 
-
 class DynamicSE(SEModule):
-    
+    """
+    可变通道数的Squeeze Excitation模块
+    """
     def __init__(self, max_channel):
         super(DynamicSE, self).__init__(max_channel)
 

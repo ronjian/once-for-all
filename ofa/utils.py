@@ -61,10 +61,19 @@ class AverageMeter(object):
 
 
 class MyModule(nn.Module):
-
+    r"""
+    Inherit nn.Module
+    
+    Add:
+    - forward
+    - module_str
+    - config
+    - build_from_config
+    """
     def forward(self, x):
         raise NotImplementedError
 
+    # jiangrong: TODO: 这个函数可以用 __repr__ 实现。
     @property
     def module_str(self):
         raise NotImplementedError
@@ -79,7 +88,20 @@ class MyModule(nn.Module):
 
 
 class MyNetwork(MyModule):
-
+    """
+    Inherit MyModule\n
+    - forward
+    - module_str
+    - config
+    - build_from_config\n
+    Adding:\n
+    - zero_last_gamma
+    - set_bn_param, done
+    - get_bn_param, done
+    - init_model, done
+    - get_parameters, done
+    - weight_parameters, done
+    """
     def forward(self, x):
         raise NotImplementedError
 

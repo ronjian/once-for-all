@@ -233,6 +233,8 @@ def ofa_net(net_id, pretrained=True):
         net = OFAMobileNetV3(
             dropout_rate=0, width_mult_list=1.2, ks_list=[3, 5, 7], expand_ratio_list=[3, 4, 6], depth_list=[2, 3, 4],
         )
+    elif net_id == 'ofa_yolov5s_k357_w1.0':
+        net = OFAYolov5s(n_classes=29, bn_param=(0.1, 1e-5), ks_list=[3, 5, 7])
     else:
         raise ValueError('Not supported: %s' % net_id)
 

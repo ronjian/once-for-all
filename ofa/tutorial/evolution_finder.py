@@ -151,9 +151,9 @@ class EvolutionFinder:
 	def run_evolution_search(self, verbose=False):
 		"""Run a single roll-out of regularized evolution to a fixed time budget."""
 		max_time_budget = self.max_time_budget
-		population_size = self.population_size
-		mutation_numbers = int(round(self.mutation_ratio * population_size))
-		parents_size = int(round(self.parent_ratio * population_size))
+		population_size = self.population_size # 100
+		mutation_numbers = int(round(self.mutation_ratio * population_size)) # 50
+		parents_size = int(round(self.parent_ratio * population_size)) # 25
 		constraint = self.efficiency_constraint
 
 		best_valids = [-100]
@@ -166,10 +166,10 @@ class EvolutionFinder:
 		for _ in range(population_size):
 			sample, efficiency = self.random_sample()
 			child_pool.append(sample)
-			efficiency_pool.append(efficiency)
+			efficiency_pool.append(efficiency) # 100
 
 		accs = self.accuracy_predictor.predict_accuracy(child_pool)
-		for i in range(mutation_numbers):
+		for i in range(mutation_numbers): # 50
 			population.append((accs[i].item(), child_pool[i], efficiency_pool[i]))
 
 		if verbose:
@@ -177,8 +177,8 @@ class EvolutionFinder:
 		# After the population is seeded, proceed with evolving the population.
 		for iter in tqdm(range(max_time_budget), desc='Searching with %s constraint (%s)' % (self.constraint_type, self.efficiency_constraint)):
 			# 按照accuracy排序，取topk作为parents
-			parents = sorted(population, key=lambda x: x[0])[::-1][:parents_size]
-			acc = parents[0][0]
+			parents = sorted(population, key=lambda x: x[0])[::-1][:parents_size] #25
+			acc = parents[0][0] # top acc
 			if verbose:
 				print('Iter: {} Acc: {}'.format(iter - 1, parents[0][0]))
 
@@ -192,13 +192,15 @@ class EvolutionFinder:
 			child_pool = []
 			efficiency_pool = []
 
-			for i in range(mutation_numbers):
+			# mutate parents (25) to child (50)
+			for i in range(mutation_numbers): # 50
 				par_sample = population[np.random.randint(parents_size)][1]
 				# Mutate
 				new_sample, efficiency = self.mutate_sample(par_sample)
 				child_pool.append(new_sample)
 				efficiency_pool.append(efficiency)
 
+			# cross mutate parents (25) to child (+50)
 			for i in range(population_size - mutation_numbers):
 				par_sample1 = population[np.random.randint(parents_size)][1]
 				par_sample2 = population[np.random.randint(parents_size)][1]
@@ -208,6 +210,7 @@ class EvolutionFinder:
 				efficiency_pool.append(efficiency)
 
 			accs = self.accuracy_predictor.predict_accuracy(child_pool)
+			# merge child (100) into origin population (25)
 			for i in range(population_size):
 				population.append((accs[i].item(), child_pool[i], efficiency_pool[i]))
 
