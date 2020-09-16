@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--task', type=str, default='expand', choices=[
     'kernel', 'depth', 'expand',
 ])
-parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
+parser.add_argument('--phase', type=int, default=2, choices=[1, 2])
 
 args = parser.parse_args()
 # 三次训练，还有teacher model的训练时间，所以总的训练时间至少是训练一个正常网络的4倍
@@ -77,7 +77,7 @@ elif args.task == 'expand':
         args.ks_list = '3,5,7'
         args.expand_list = '3,4,6'
         args.depth_list = '2,3,4'
-        args.init_path = None
+        args.init_path = '/workspace/once-for-all/exp/kernel_depth2kernel_depth_width/phase1/checkpoint/checkpoint.pth.tar'
 else:
     raise NotImplementedError
 
@@ -101,7 +101,7 @@ args.model_init = 'he_fout'
 args.validation_frequency = 1
 args.print_frequency = 100
 
-args.n_worker = 14
+args.n_worker = 12
 args.resize_scale = 0.08
 args.distort_color = 'tf'
 args.image_size = '128,160,192,224'
